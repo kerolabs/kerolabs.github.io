@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es-419">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Únete a una junta | Pozzo</title>
+  <meta name="description" content="Te invitaron a una junta en Pozzo. Abre la aplicación e ingresa el código de invitación.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#FFF8F6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1B110E" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+  <header class="container bar">
+    <a class="brand" href="https://kerolabs.github.io/pozzo-landing-page/" aria-label="Pozzo">
+      <img class="brand__mark" src="../assets/img/logo.svg" width="40" height="40" alt="">
+      <span class="brand__word">Pozzo</span>
+    </a>
+  </header>
+
+  <main class="container">
+    <section class="card" aria-labelledby="title">
+      <h1 id="title">Te invitaron a una junta</h1>
+      <p class="lead">Únete desde la aplicación de Pozzo con este código de invitación.</p>
+
+      <div class="code" data-code-box hidden>
+        <strong data-code></strong>
+        <button type="button" class="btn" data-copy>Copiar</button>
+      </div>
+      <p class="note" data-no-code hidden>
+        Este enlace no trae un código. Pídele a quien te invitó que te lo comparta.
+      </p>
+
+      <ol class="steps">
+        <li>Abre Pozzo en tu celular e inicia sesión con tu número.</li>
+        <li>En Juntas, toca «Unirme a una junta».</li>
+        <li>Ingresa el código y confirma tus datos.</li>
+      </ol>
+      <p class="note">
+        El código vence a los pocos días. Si ya no funciona, pídele uno nuevo a quien organiza la junta.
+      </p>
+    </section>
+  </main>
+
+  <footer>© <span data-year></span> Kerolabs. Pozzo es un proyecto estudiantil de la UPC.</footer>
+
+  <script>
+    (() => {
+      document.querySelector("[data-year]").textContent = new Date().getFullYear();
+
+      // The backend shares .../unirme/?c=JB7K4M; the app prints the code as JB-7K4M.
+      const raw = (new URLSearchParams(location.search).get("c") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (!raw) {
+        document.querySelector("[data-no-code]").hidden = false;
+        return;
+      }
+      const code = raw.length > 2 ? raw.slice(0, 2) + "-" + raw.slice(2) : raw;
+      document.querySelector("[data-code]").textContent = code;
+      document.querySelector("[data-code-box]").hidden = false;
+
+      const copy = document.querySelector("[data-copy]");
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(code);
+          copy.textContent = "Copiado";
+        } catch {
+          copy.textContent = "Cópialo a mano";
+        }
+        setTimeout(() => { copy.textContent = "Copiar"; }, 2000);
+      });
+    })();
+  </script>
+</body>
+</html>
