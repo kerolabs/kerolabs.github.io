@@ -11,7 +11,7 @@ Páginas públicas de los enlaces que comparte Pozzo, la app para administrar ju
 | `404.html` | Página para enlaces que no existen. |
 | `index.html` | Redirige a la landing. |
 
-El backend arma estos enlaces con `INVITATIONS_LINK_BASE_URL` y `COMPLIANCE_SHARED_LINK_BASE_URL`. La página del historial consulta `GET /api/v1/compliance/shared/{token}` en `pozzo-backend.onrender.com`, que es público.
+El backend arma estos enlaces con `INVITATIONS_LINK_BASE_URL` y `COMPLIANCE_SHARED_LINK_BASE_URL`. La página del historial consulta `GET /api/v1/compliance/shared/{token}` en `api-kerolabs.duckdns.org`, que es público.
 
 Es un sitio estático, sin build ni dependencias. `.nojekyll` evita que GitHub Pages ignore las carpetas que empiezan con punto, como `.well-known/`, donde irá el `assetlinks.json` de los App Links de Android.
 
