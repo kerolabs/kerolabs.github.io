@@ -172,8 +172,7 @@ a { color: var(--md-primary); text-underline-offset: 3px; }
 
 .bar { display: flex; align-items: center; min-height: var(--bar-h); }
 .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; color: var(--md-primary); text-decoration: none; }
-.brand__mark { width: 32px; height: 32px; }
-.brand__word { font-size: 1.375rem; line-height: 1; font-weight: 700; letter-spacing: -0.02em; }
+.brand__logo { display: block; width: auto; height: 30px; }
 
 .btn {
   display: inline-flex;
