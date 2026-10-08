@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es-419">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historial compartido | Pozzo</title>
+  <meta name="description" content="Resumen de puntualidad de un miembro de Pozzo, compartido por él mismo.">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#FFF8F6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1B110E" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+  <header class="container bar">
+    <a class="brand" href="https://kerolabs.github.io/pozzo-landing-page/" aria-label="Pozzo">
+      <img class="brand__mark" src="../assets/img/logo.svg" width="40" height="40" alt="">
+      <span class="brand__word">Pozzo</span>
+    </a>
+  </header>
+
+  <main class="container">
+    <section class="card" data-state="loading" aria-live="polite">
+      <div class="spinner" role="presentation"></div>
+      <h1>Cargando el historial</h1>
+      <p class="note" data-slow hidden>El servidor se está despertando; puede tardar hasta un minuto.</p>
+    </section>
+
+    <section class="card" data-state="error" hidden>
+      <h1>Este enlace ya no está disponible</h1>
+      <p class="lead">Los enlaces de historial duran 7 días y quien lo compartió puede anularlo antes. Pídele uno nuevo.</p>
+    </section>
+
+    <section class="card" data-state="offline" hidden>
+      <h1>No pudimos cargar el historial</h1>
+      <p class="lead">Revisa tu conexión e inténtalo de nuevo.</p>
+      <button type="button" class="btn" data-retry>Reintentar</button>
+    </section>
+
+    <section class="card" data-state="ready" hidden aria-labelledby="name">
+      <div>
+        <p class="note">Historial en Pozzo de</p>
+        <h1 id="name" data-name></h1>
+      </div>
+      <div class="hero">
+        <span class="hero__label">Aportes puntuales</span>
+        <span class="hero__value" data-rate></span>
+        <span data-rate-detail></span>
+      </div>
+      <div class="chips" data-chips></div>
+      <div class="stats">
+        <div class="stat"><strong data-cycles></strong><span>Ciclos completados</span></div>
+        <div class="stat"><strong data-dropouts></strong><span>Juntas abandonadas</span></div>
+      </div>
+      <p class="note">
+        Datos registrados en Pozzo por las organizadoras de sus juntas. No incluye montos ni nombres de juntas.
+        Enlace válido hasta el <span data-expires></span>.
+      </p>
+    </section>
+  </main>
+
+  <footer>© <span data-year></span> Kerolabs. Pozzo es un proyecto estudiantil de la UPC.</footer>
+
+  <script>
+    (() => {
+      const API = "https://pozzo-backend.onrender.com/api/v1/compliance/shared/";
+      const $ = (selector) => document.querySelector(selector);
+      $("[data-year]").textContent = new Date().getFullYear();
+
+      const show = (state) => document.querySelectorAll("[data-state]").forEach((section) => {
+        section.hidden = section.dataset.state !== state;
+      });
+      const plural = (count, one, many) => count + " " + (count === 1 ? one : many);
+
+      // Tokens are URL-safe Base64, as the backend makes them; anything else is not a link of ours.
+      const token = new URLSearchParams(location.search).get("t") || "";
+      if (!/^[A-Za-z0-9_-]{16,32}$/.test(token)) {
+        show("error");
+        return;
+      }
+
+      const render = ({ displayName, summary, expiresAt }) => {
+        $("[data-name]").textContent = displayName;
+        const hasContributions = summary.contributions > 0;
+        $("[data-rate]").textContent = summary.complianceRate == null ? "Nuevo" : summary.complianceRate + " %";
+        $("[data-rate-detail]").textContent = hasContributions
+          ? summary.onTime + " de " + summary.contributions + " aportes en todas sus juntas"
+          : "Todavía no tiene aportes registrados";
+
+        const chips = $("[data-chips]");
+        chips.replaceChildren();
+        const chip = (text, good) => {
+          const element = document.createElement("span");
+          element.className = good ? "chip chip--good" : "chip";
+          element.textContent = text;
+          chips.append(element);
+        };
+        if (hasContributions) chip(plural(summary.onTime, "puntual", "puntuales"), true);
+        if (summary.late > 0) chip(plural(summary.late, "atrasado", "atrasados"));
+        if (summary.covered > 0) chip(plural(summary.covered, "cubierto", "cubiertos"));
+        if (summary.rejected > 0) chip(plural(summary.rejected, "comprobante rechazado", "comprobantes rechazados"));
+        chips.hidden = chips.childElementCount === 0;
+
+        $("[data-cycles]").textContent = summary.cyclesCompleted;
+        $("[data-dropouts]").textContent = summary.dropouts;
+        $("[data-expires]").textContent = new Date(expiresAt)
+          .toLocaleDateString("es-PE", { day: "numeric", month: "long", year: "numeric" });
+        show("ready");
+      };
+
+      const load = async () => {
+        show("loading");
+        // The backend sleeps when nobody uses it and takes a while to wake up.
+        const slow = setTimeout(() => { $("[data-slow]").hidden = false; }, 4000);
+        try {
+          const response = await fetch(API + encodeURIComponent(token), { headers: { Accept: "application/json" } });
+          if (response.status === 404) show("error");
+          else if (!response.ok) show("offline");
+          else render(await response.json());
+        } catch {
+          show("offline");
+        } finally {
+          clearTimeout(slow);
+        }
+      };
+
+      $("[data-retry]").addEventListener("click", load);
+      load();
+    })();
+  </script>
+</body>
+</html>
