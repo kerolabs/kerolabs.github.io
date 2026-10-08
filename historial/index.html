@@ -27,7 +27,7 @@
     <section class="card" data-state="loading" aria-live="polite">
       <div class="spinner" role="presentation"></div>
       <h1>Cargando el historial</h1>
-      <p class="note" data-slow hidden>El servidor se está despertando; puede tardar hasta un minuto.</p>
+      <p class="note" data-slow hidden>Está tardando más de lo normal; espera un momento.</p>
     </section>
 
     <section class="card" data-state="error" hidden>
@@ -67,7 +67,7 @@
 
   <script>
     (() => {
-      const API = "https://pozzo-backend.onrender.com/api/v1/compliance/shared/";
+      const API = "https://api-kerolabs.duckdns.org/api/v1/compliance/shared/";
       const $ = (selector) => document.querySelector(selector);
       $("[data-year]").textContent = new Date().getFullYear();
 
