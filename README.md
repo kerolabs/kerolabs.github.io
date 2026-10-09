@@ -25,4 +25,8 @@ Luego abre `http://localhost:8000/unirme/?c=JB7K4M`.
 
 ## Cómo contribuir
 
-`main` publica el sitio y `develop` integra el trabajo. Ninguna de las dos acepta push directo: los cambios entran por pull request y el check `commit-policy` exige [Conventional Commits](https://www.conventionalcommits.org/) en inglés.
+`main` publica el sitio y `develop` integra el trabajo. Ninguna de las dos acepta push directo: los cambios entran por pull request y el check `commit-policy` exige [Conventional Commits](https://www.conventionalcommits.org/) en inglés. El hook `.githooks/commit-msg` aplica la misma regla antes de crear el commit; como el sitio no tiene paso de compilación, actívalo una vez después de clonar:
+
+```bash
+git config core.hooksPath .githooks
+```
