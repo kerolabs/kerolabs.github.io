@@ -8,10 +8,11 @@ Páginas públicas de los enlaces que comparte Pozzo, la app para administrar ju
 |---|---|
 | `unirme/?c=JB7K4M` | Invitación a una junta: muestra el código y cómo unirse desde la app. |
 | `historial/?t=<token>` | Historial compartido: resumen de puntualidad de un miembro, leído del backend. |
+| `aporte/?t=<token>` | Aporte compartido: constancia de un aporte registrado en una junta, leída del backend. |
 | `404.html` | Página para enlaces que no existen. |
 | `index.html` | Redirige a la landing. |
 
-El backend arma estos enlaces con `INVITATIONS_LINK_BASE_URL` y `COMPLIANCE_SHARED_LINK_BASE_URL`. La página del historial consulta `GET /api/v1/compliance/shared/{token}` en `api-kerolabs.duckdns.org`, que es público.
+El backend arma estos enlaces con `INVITATIONS_LINK_BASE_URL`, `COMPLIANCE_SHARED_LINK_BASE_URL` y `CONTRIBUTIONS_SHARED_LINK_BASE_URL`. La página del historial consulta `GET /api/v1/compliance/shared/{token}` y la del aporte `GET /api/v1/contributions/shared/{token}` en `api-kerolabs.duckdns.org`; ambos son públicos.
 
 Es un sitio estático, sin build ni dependencias. `.nojekyll` evita que GitHub Pages ignore las carpetas que empiezan con punto, como `.well-known/`, donde irá el `assetlinks.json` de los App Links de Android.
 

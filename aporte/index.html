@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es-419">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aporte compartido | Pozzo</title>
+  <meta name="description" content="Constancia de un aporte registrado en una junta de Pozzo, compartida por un miembro.">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#FFF8F6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1B110E" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+  <header class="container bar">
+    <a class="brand" href="https://kerolabs.github.io/pozzo-landing-page/">
+      <picture>
+        <source srcset="../assets/img/logo-dark.png" media="(prefers-color-scheme: dark)">
+        <img class="brand__logo" src="../assets/img/logo-light.png" width="120" height="30" alt="Pozzo">
+      </picture>
+    </a>
+  </header>
+
+  <main class="container">
+    <section class="card" data-state="loading" aria-live="polite">
+      <div class="spinner" role="presentation"></div>
+      <h1>Cargando el aporte</h1>
+      <p class="note" data-slow hidden>Está tardando más de lo normal; espera un momento.</p>
+    </section>
+
+    <section class="card" data-state="error" hidden>
+      <h1>No encontramos este aporte</h1>
+      <p class="lead">El enlace está incompleto o el aporte ya no cuenta para el pozo. Pide a quien lo compartió que lo envíe de nuevo.</p>
+    </section>
+
+    <section class="card" data-state="offline" hidden>
+      <h1>No pudimos cargar el aporte</h1>
+      <p class="lead">Revisa tu conexión e inténtalo de nuevo.</p>
+      <button type="button" class="btn" data-retry>Reintentar</button>
+    </section>
+
+    <section class="card" data-state="ready" hidden aria-labelledby="name">
+      <div>
+        <p class="note">Aporte registrado en Pozzo de</p>
+        <h1 id="name" data-name></h1>
+      </div>
+      <div class="hero">
+        <span class="hero__label">Monto</span>
+        <span class="hero__value" data-amount></span>
+        <span data-period></span>
+      </div>
+      <div class="chips" data-chips></div>
+      <div class="stats">
+        <div class="stat"><strong data-paid-on></strong><span data-paid-on-label></span></div>
+        <div class="stat"><strong data-operation></strong><span>Operación terminada en</span></div>
+      </div>
+      <p class="note">
+        Registrado en Pozzo el <span data-registered></span>. Pozzo no recibe ni mueve dinero: esta constancia muestra
+        lo que la junta validó, sin la imagen del comprobante.
+      </p>
+    </section>
+  </main>
+
+  <footer>© <span data-year></span> Kerolabs. Pozzo es un proyecto estudiantil de la UPC.</footer>
+
+  <script>
+    (() => {
+      const API = "https://api-kerolabs.duckdns.org/api/v1/contributions/shared/";
+      const $ = (selector) => document.querySelector(selector);
+      $("[data-year]").textContent = new Date().getFullYear();
+
+      const show = (state) => document.querySelectorAll("[data-state]").forEach((section) => {
+        section.hidden = section.dataset.state !== state;
+      });
+
+      // Tokens are URL-safe Base64, as the backend makes them; anything else is not a link of ours.
+      const token = new URLSearchParams(location.search).get("t") || "";
+      if (!/^[A-Za-z0-9_-]{16,32}$/.test(token)) {
+        show("error");
+        return;
+      }
+
+      const METHODS = { TRANSFER: "Transferencia", CASH: "En efectivo", COVERAGE: "Cubierto por otro miembro" };
+      const longDate = (value) => new Date(value)
+        .toLocaleDateString("es-PE", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Lima" });
+      // A date without time is the day itself; parsing it as UTC would show the day before in Lima.
+      const dayDate = (value) => new Date(value + "T12:00:00")
+        .toLocaleDateString("es-PE", { day: "numeric", month: "long", year: "numeric" });
+      const money = (amount, currency) => new Intl.NumberFormat("es-PE",
+        { style: "currency", currency, minimumFractionDigits: Number.isInteger(amount) ? 0 : 2 }).format(amount);
+
+      const render = (contribution) => {
+        $("[data-name]").textContent = contribution.memberName;
+        $("[data-amount]").textContent = money(contribution.amount, contribution.currency);
+        $("[data-period]").textContent = "Turno " + contribution.turnNumber + " de " + contribution.groupName
+          + ", con corte el " + dayDate(contribution.cutoffDate);
+
+        const chips = $("[data-chips]");
+        chips.replaceChildren();
+        const chip = document.createElement("span");
+        chip.className = "chip chip--good";
+        chip.textContent = METHODS[contribution.method] || contribution.method;
+        chips.append(chip);
+
+        const transfer = contribution.paidOn != null;
+        $("[data-paid-on]").textContent = transfer ? dayDate(contribution.paidOn) : "No aplica";
+        $("[data-paid-on-label]").textContent = transfer ? "Fecha de la transferencia" : "Sin transferencia";
+        $("[data-operation]").textContent = contribution.operationNumberEnding || "No aplica";
+        $("[data-registered]").textContent = longDate(contribution.registeredAt);
+        show("ready");
+      };
+
+      const load = async () => {
+        show("loading");
+        // The backend sleeps when nobody uses it and takes a while to wake up.
+        const slow = setTimeout(() => { $("[data-slow]").hidden = false; }, 4000);
+        try {
+          const response = await fetch(API + encodeURIComponent(token), { headers: { Accept: "application/json" } });
+          if (response.status === 404) show("error");
+          else if (!response.ok) show("offline");
+          else render(await response.json());
+        } catch {
+          show("offline");
+        } finally {
+          clearTimeout(slow);
+        }
+      };
+
+      $("[data-retry]").addEventListener("click", load);
+      load();
+    })();
+  </script>
+</body>
+</html>
