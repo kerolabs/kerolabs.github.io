@@ -11,7 +11,7 @@
   <meta name="theme-color" content="#1B110E" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
-  <link rel="stylesheet" href="../assets/css/site.css">
+  <link rel="stylesheet" href="../assets/css/site.css?v=2">
 </head>
 <body>
   <header class="container bar">
@@ -56,8 +56,13 @@
         <div class="stat"><strong data-cycles></strong><span>Ciclos completados</span></div>
         <div class="stat"><strong data-dropouts></strong><span>Juntas abandonadas</span></div>
       </div>
+      <div class="groups" data-groups-section hidden>
+        <h2>Por junta</h2>
+        <ul class="groups__list" data-groups></ul>
+      </div>
       <p class="note">
-        Datos registrados en Pozzo por las organizadoras de sus juntas. No incluye montos ni nombres de juntas.
+        Datos registrados en Pozzo por las organizadoras de sus juntas. Las juntas se numeran en el orden en que
+        se unió y no se muestran sus nombres ni montos.
         Enlace válido hasta el <span data-expires></span>.
       </p>
     </section>
@@ -83,7 +88,40 @@
         return;
       }
 
-      const render = ({ displayName, summary, expiresAt }) => {
+      // One row per group, numbered in the order the member joined; the backend sends no names.
+      const renderGroups = (groups) => {
+        const list = $("[data-groups]");
+        list.replaceChildren();
+        (groups || []).forEach((group, index) => {
+          const item = document.createElement("li");
+          item.className = "group";
+          const title = document.createElement("strong");
+          title.textContent = "Junta " + (index + 1);
+          const detail = document.createElement("span");
+          const parts = [
+            group.status === "COMPLETED" ? "Ciclo completado" : "En curso",
+            group.contributions > 0
+              ? group.onTime + " de " + group.contributions + " puntuales"
+              : "Aún sin aportes",
+          ];
+          if (group.late > 0) parts.push(plural(group.late, "atrasado", "atrasados"));
+          if (group.covered > 0) parts.push(plural(group.covered, "cubierto", "cubiertos"));
+          detail.textContent = parts.join(" · ");
+          const rate = document.createElement("span");
+          rate.className = group.contributions > 0 && group.onTime === group.contributions ? "chip chip--good" : "chip";
+          rate.textContent = group.contributions > 0
+            ? Math.round(group.onTime * 100 / group.contributions) + " %"
+            : "Nuevo";
+          const text = document.createElement("div");
+          text.className = "group__text";
+          text.append(title, detail);
+          item.append(text, rate);
+          list.append(item);
+        });
+        $("[data-groups-section]").hidden = list.childElementCount === 0;
+      };
+
+      const render = ({ displayName, summary, groups, expiresAt }) => {
         $("[data-name]").textContent = displayName;
         const hasContributions = summary.contributions > 0;
         $("[data-rate]").textContent = summary.complianceRate == null ? "Nuevo" : summary.complianceRate + " %";
@@ -107,6 +145,7 @@
 
         $("[data-cycles]").textContent = summary.cyclesCompleted;
         $("[data-dropouts]").textContent = summary.dropouts;
+        renderGroups(groups);
         $("[data-expires]").textContent = new Date(expiresAt)
           .toLocaleDateString("es-PE", { day: "numeric", month: "long", year: "numeric" });
         show("ready");
