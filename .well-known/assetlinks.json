@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "pe.kerolabs.pozzo",
+      "sha256_cert_fingerprints": [
+        "C2:55:6B:74:28:E6:86:35:29:06:59:3D:B9:63:55:89:DF:D4:EA:F3:7E:A4:9F:0D:83:44:5F:B3:64:9F:A9:2A"
+      ]
+    }
+  }
+]
